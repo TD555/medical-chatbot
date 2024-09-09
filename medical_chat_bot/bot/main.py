@@ -4,11 +4,12 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from extraction.document_parser import extract_text_from_pdf
 from extraction.image_parser import extract_text_from_image 
-from extraction.get_structured_data import extract_medical_data, extract_json_from_text
+from extraction.get_structured_data import extract_json_from_text
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from dotenv import load_dotenv
 load_dotenv()
+from db.migrate import save_data_to_db
 
 TG_TOKEN = os.environ.get('TG_TOKEN')
 # Разрешённые MIME-типы для PDF, PNG и JPEG
@@ -31,10 +32,12 @@ async def handle_document(update: Update, context):
         file_id = document.file_id
         new_file = await context.bot.get_file(file_id)
         file_content = await new_file.download_as_bytearray()
-
+        await update.message.reply_text(f"Файл {document.file_name} успешно загружен. Пожалуйта подождите до завершении поиска информации...")
         all_text = await extract_text_from_pdf(io.BytesIO(file_content))
-        
-        await update.message.reply_text(f"Файл {document.file_name} успешно загружен. Контент документа: {extract_json_from_text(document.file_name + ' ' + all_text)}")
+        extarcted_info = await extract_json_from_text(document.file_name + ' ' + all_text)
+        await save_data_to_db(extarcted_info['MedicalAnalysis'][0])
+        # await update.message.reply_text(f"Контент документа: {extarcted_info}")
+        await update.message.reply_text(f"Контент документа: {all_text}")
     else:
         await update.message.reply_text("Пожалуйста, отправьте файл в формате PDF, PNG или JPEG.")
 
