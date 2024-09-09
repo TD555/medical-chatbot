@@ -3,4 +3,6 @@ python-telegram-bot
 PyMuPDF==1.23.6
 pillow
 pytesseract==0.3.13
-psycopg2==2.9.9
+# psycopg2==2.9.9
+google-generativeai
+sqlalchemy 

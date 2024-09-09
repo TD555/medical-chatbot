@@ -14,7 +14,7 @@ async def extract_text_from_pdf(pdf_file: Union[BytesIO, bytes]) -> str:
         page = pdf_document.load_page(page_num)
 
         # Extract text from the page
-        text = page.get_text("text")
+        text = page.get_text("text", sort=True)
         # clean_text = text.replace("\n", " ")
         # clean_text = re.sub(r'\s+', ' ', clean_text)
         all_texts += text + ' '  # Append text from the page

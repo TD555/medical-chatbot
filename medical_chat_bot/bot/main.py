@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from extraction.document_parser import extract_text_from_pdf
 from extraction.image_parser import extract_text_from_image 
-from extraction.get_structured_data import extract_medical_data
+from extraction.get_structured_data import extract_medical_data, extract_json_from_text
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from dotenv import load_dotenv
@@ -34,7 +34,7 @@ async def handle_document(update: Update, context):
 
         all_text = await extract_text_from_pdf(io.BytesIO(file_content))
         
-        await update.message.reply_text(f"Файл {document.file_name} успешно загружен. Контент документа: {extract_medical_data(all_text)}")
+        await update.message.reply_text(f"Файл {document.file_name} успешно загружен. Контент документа: {extract_json_from_text(document.file_name + ' ' + all_text)}")
     else:
         await update.message.reply_text("Пожалуйста, отправьте файл в формате PDF, PNG или JPEG.")
 
@@ -54,7 +54,7 @@ async def handle_photo(update: Update, context):
         all_text = await extract_text_from_image(io.BytesIO(file_content))
         # file_path = f"downloads/photo_{file_id}.jpg"
         # await new_file.download_to_drive(file_path)
-        await update.message.reply_text(f"Фото успешно загружено и сохранено. Контент изображения: {extract_medical_data(all_text)}")
+        await update.message.reply_text(f"Фото успешно загружено и сохранено. Контент изображения: {extract_json_from_text(all_text)}")
     else:
         await update.message.reply_text("Пожалуйста, отправьте файл в формате PDF, PNG или JPEG.")
 
