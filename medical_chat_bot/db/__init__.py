@@ -14,7 +14,8 @@ class MedicalAnalysis(Base):
     __tablename__ = 'medical_analyses'
     id = Column(Integer, primary_key=True, autoincrement=True)
     test_name = Column(String, nullable=True)
-    reference_values = Column(String, nullable=True)
+    reference_min_value = Column(String, nullable=True)
+    reference_max_value = Column(String, nullable=True)
     units = Column(String, nullable=True)
     result = Column(String, nullable=True)
     test_date = Column(DateTime, nullable=True)
@@ -58,7 +59,7 @@ def create_database_if_not_exists():
 
 # Create tables in the database
 def create_tables():
-    DATABASE_URL = f'postgresql://{user}:{password}@{host}:{port}/{dbname}'
+    DATABASE_URL = f'postgresql://{user}:{password}@{host}:{port}/{dbname}?client_encoding=utf8'
     engine = create_engine(DATABASE_URL)
     Base.metadata.create_all(engine)
     print("Tables created.")

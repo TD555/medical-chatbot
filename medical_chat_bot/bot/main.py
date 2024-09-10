@@ -35,9 +35,17 @@ async def handle_document(update: Update, context):
         await update.message.reply_text(f"Файл {document.file_name} успешно загружен. Пожалуйта подождите до завершении поиска информации...")
         all_text = await extract_text_from_pdf(io.BytesIO(file_content))
         extarcted_info = await extract_json_from_text(document.file_name + ' ' + all_text)
-        await save_data_to_db(extarcted_info['MedicalAnalysis'][0])
-        # await update.message.reply_text(f"Контент документа: {extarcted_info}")
-        await update.message.reply_text(f"Контент документа: {all_text}")
+        if 'MedicalResearch' in extarcted_info:
+            represent_info = '\n'.join([f'{key} - {value}' for key, value in extarcted_info['MedicalResearch'].items()])
+            
+        elif 'MedicalAnalysis' in extarcted_info:
+            represent_info = ''
+            for index, item in enumerate(extarcted_info['MedicalAnalysis']):        
+                represent_info += f'{index + 1}.' + '\n'.join([f'{key} - {value}' for key, value in item.items()]) + '\n\n'
+        
+        await update.message.reply_text(f"Информация извлечена из документа: \n{represent_info}")
+        await save_data_to_db(extarcted_info)
+        
     else:
         await update.message.reply_text("Пожалуйста, отправьте файл в формате PDF, PNG или JPEG.")
 
