@@ -58,27 +58,24 @@ async def change_date_format(data, date):
                 data["MedicalResearch"]['research_date'] = parser.parse(data["MedicalResearch"]['research_date'] if data["MedicalResearch"]['research_date'] else date.split(' ')[0])
             except Exception as e:
                 print(str(e))
-                data["MedicalResearch"]['research_date'] = None      
-            print(data)
-
+                data["MedicalResearch"]['research_date'] = None     
+                
+                
 async def extract_json_from_text(input_text):
     
     date = re.search(date_pattern, input_text)
     if date:
         date = date.group(1)
         
-    # Format the prompt with the input text
     prompt = prompt_template.format(input_text=input_text)
     
-    # Generate a completion
     response = model.generate_content(prompt)
     
-    # Extract and return the result
     if response and response.candidates:
-        print(response.text)
-        data = json.loads(re.search(r'\{[\w\W]*\}', response.text).group())
+        data = json.loads(rf'{re.search(r'\{[\w\W]*\}', response.text).group()}')
         await change_date_format(data, date)
         return data
+    
     else:
-        return {"error": "No valid response from the model"}
+        raise Exception("No valid response from the model")
     

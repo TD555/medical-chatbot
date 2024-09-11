@@ -13,7 +13,7 @@ Base = declarative_base()
 
 # Define models for the tables
 class MedicalAnalysis(Base):
-    __tablename__ = 'medical_analyses'
+    __tablename__ = 'medical_analyse'
     id = Column(Integer, primary_key=True, autoincrement=True)
     test_name = Column(String, nullable=True)
     reference_min_value = Column(String, nullable=True)
