@@ -1,4 +1,0 @@
-FROM python:3.9.16-slim-buster
-COPY . .
-RUN python -m pip install -r requirements.txt
-CMD python medical_chat_bot\bot\main.py

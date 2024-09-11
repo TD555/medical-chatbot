@@ -17,7 +17,7 @@ date_pattern = r"(?i)дата[\w\W]*?\b(?:исследования|анализ�
 
 # Define the prompt template for extracting structured data as JSON
 prompt_template = """
-You are an AI assistant capable of extracting structured information from medical documents. Given a passage, extract specific information and return it only as a JSON object. The JSON should include one of the following fields depending on the type of document:
+You are an AI assistant capable of extracting structured information from medical documents . Given a passage, extract specific information and return it only as a JSON object. The JSON should include one of the following fields depending on the type of document:
 
 MedicalAnalysis (анализы):
 test_name (e.g., Гемоглобин, Глюкоза)
@@ -45,37 +45,44 @@ If certain information is not present in the text, return those fields only as N
 Now, process the following text: {input_text}
 """
 
+
 async def change_date_format(data, date):
     if "MedicalAnalysis" in data:
         for key, item in enumerate(data["MedicalAnalysis"]):
             try:
-                data["MedicalAnalysis"][key]['test_date'] = parser.parse(item['test_date'] if item['test_date'] else date.split(' ')[0])
+                data["MedicalAnalysis"][key]['test_date'] = parser.parse(
+                    item['test_date'] if item['test_date'] else date.split(' ')[0])
             except:
-                data["MedicalAnalysis"][key]['test_date'] = None      
-    
+                data["MedicalAnalysis"][key]['test_date'] = None
+
     if "MedicalResearch" in data:
-            try:
-                data["MedicalResearch"]['research_date'] = parser.parse(data["MedicalResearch"]['research_date'] if data["MedicalResearch"]['research_date'] else date.split(' ')[0])
-            except Exception as e:
-                print(str(e))
-                data["MedicalResearch"]['research_date'] = None     
-                
-                
+        try:
+            data["MedicalResearch"]['research_date'] = parser.parse(
+                data["MedicalResearch"]['research_date'] if data["MedicalResearch"]['research_date'] else date.split(' ')[0])
+        except Exception as e:
+            print(str(e))
+            data["MedicalResearch"]['research_date'] = None
+
+
 async def extract_json_from_text(input_text):
-    
+    print(input_text)
     date = re.search(date_pattern, input_text)
     if date:
         date = date.group(1)
-        
+
     prompt = prompt_template.format(input_text=input_text)
-    
+
     response = model.generate_content(prompt)
-    
+
     if response and response.candidates:
-        data = json.loads(rf'{re.search(r'\{[\w\W]*\}', response.text).group()}')
+        match = re.search(r'\{[\w\W]*\}', response.text)
+        if match:
+            data = json.loads(rf"{match.group()}")
+        else:
+            raise Exception("No valid response from the model")
+        
         await change_date_format(data, date)
         return data
-    
+
     else:
         raise Exception("No valid response from the model")
-    

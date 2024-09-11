@@ -1,6 +1,9 @@
 version: '3'
 services:
   telbot:
-    image: dockerbot
+    image: telegram_bot
+    build: 
+      context: .
+
     env_file: ".env"
     restart: always
