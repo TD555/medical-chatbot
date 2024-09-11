@@ -2,3 +2,5 @@ version: '3'
 services:
   telbot:
     image: dockerbot
+    env_file: ".env"
+    restart: always
