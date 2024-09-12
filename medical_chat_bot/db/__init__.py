@@ -1,7 +1,8 @@
 import psycopg2
 from psycopg2 import sql
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine, Column, Uuid, String, DateTime, Text, Float
+from sqlalchemy.ext.declarative import declarative_base
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -12,19 +13,19 @@ Base = declarative_base()
 # Define models for the tables
 class MedicalAnalysis(Base):
     __tablename__ = 'medical_analyse'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Uuid, primary_key=True)
     test_name = Column(String, nullable=True)
-    reference_min_value = Column(String, nullable=True)
-    reference_max_value = Column(String, nullable=True)
+    reference_min_value = Column(Float, nullable=True)
+    reference_max_value = Column(Float, nullable=True)
     units = Column(String, nullable=True)
-    result = Column(String, nullable=True)
+    result = Column(Float, nullable=True)
     test_date = Column(DateTime, nullable=True)
     institution = Column(String, nullable=True)
     address = Column(String, nullable=True)
 
 class MedicalResearch(Base):
     __tablename__ = 'medical_research'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Uuid, primary_key=True)
     research_name = Column(String, nullable=True)
     research_date = Column(DateTime, nullable=True)
     institution = Column(String, nullable=True)

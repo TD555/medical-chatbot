@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from extraction.document_parser import extract_text_from_pdf
 from extraction.image_parser import extract_text_from_image
 from extraction.get_structured_data import extract_json_from_text
-from db.migrate import save_data_to_db
+from db.migrate import insert_data
 from chat.chat_with_AI import answer_question
 from version import *
 from telegram import Update
@@ -35,6 +35,19 @@ TG_TOKEN = os.environ.get("TG_TOKEN")
 ALLOWED_MIME_TYPES = ["application/pdf", "image/png", "image/jpeg"]
 
 
+def format_info(data):
+    if isinstance(data, dict):
+        return "\n".join([f"{key} - {value}" for key, value in data.items()])
+    elif isinstance(data, list):
+        return "\n\n".join(
+            [
+                f"{index + 1}.\n"
+                + "\n".join([f"{key} - {value}" for key, value in item.items()])
+                for index, item in enumerate(data)
+            ]
+        )
+
+
 async def error(update: Update, context: CallbackContext):
     logger.error(f"Update {update} caused error {context.error}")
 
@@ -60,46 +73,44 @@ async def about(update: Update, context: CallbackContext):
 async def handle_document(update: Update, context: CallbackContext):
     document = update.message.document
     if document and document.mime_type in ALLOWED_MIME_TYPES:
-
-        file_id = document.file_id
-        new_file = await context.bot.get_file(file_id)
-        file_content = await new_file.download_as_bytearray()
-        await update.message.reply_text(
-            f"Файл успешно загружен. Пожалуйта подождите до завершении поиска информации..."
-        )
-
-        all_text = await extract_text_from_pdf(io.BytesIO(file_content))
-        extarcted_info = await extract_json_from_text(
-            document.file_name + " " + all_text
-        )
-
-        if "MedicalResearch" in extarcted_info:
-            represent_info = "\n".join(
-                [
-                    f"{key} - {value}"
-                    for key, value in extarcted_info["MedicalResearch"].items()
-                ]
+        try:
+            file_id = document.file_id
+            new_file = await context.bot.get_file(file_id)
+            file_content = await new_file.download_as_bytearray()
+            await update.message.reply_text(
+                f"Файл успешно загружен. Пожалуйта подождите до завершении поиска информации..."
             )
 
-        elif "MedicalAnalysis" in extarcted_info:
-            represent_info = ""
-            for index, item in enumerate(extarcted_info["MedicalAnalysis"]):
-                represent_info += (
-                    f"{index + 1}."
-                    + "\n".join([f"{key} - {value}" for key, value in item.items()])
-                    + "\n\n"
+            all_text = await extract_text_from_pdf(io.BytesIO(file_content))
+            extarcted_info = await extract_json_from_text(
+                document.file_name, all_text
+            )
+
+            for section in ["MedicalResearch", "MedicalAnalysis"]:
+                    if section in extarcted_info:
+                        represent_info = format_info(extarcted_info[section])
+                        break
+
+            else:
+                update.message.reply_text(
+                    f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
                 )
 
-        else:
-            update.message.reply_text(
-                "К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
+            await update.message.reply_text(
+                f"Информация извлечена из документа:\n{represent_info}"
             )
-
-        await update.message.reply_text(
-            f"Информация извлечена из документа:\n{represent_info}"
-        )
-        await save_data_to_db(extarcted_info)
-
+            
+            try:
+                await insert_data(extarcted_info)
+            except Exception as e:
+                await update.message.reply_text(
+                    f"Не удалось сохранить информацию в базу данных. Возможно, она уже была сохранена. Пожалуйста, попробуйте еще раз."
+                )
+                
+        except Exception as e:
+            await update.message.reply_text(
+                f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз. {e}"
+            )
     else:
         await update.message.reply_text(
             "Пожалуйста, отправьте файл в формате PDF, PNG или JPEG."
@@ -125,25 +136,13 @@ async def handle_photo(update: Update, context: CallbackContext):
 
             all_text = await extract_text_from_image(io.BytesIO(file_content))
             extarcted_info = await extract_json_from_text(
-                photo_file.file_name + " " + all_text
+                photo_file.file_name, all_text
             )
 
-            if "MedicalResearch" in extarcted_info:
-                represent_info = "\n".join(
-                    [
-                        f"{key} - {value}"
-                        for key, value in extarcted_info["MedicalResearch"].items()
-                    ]
-                )
-
-            elif "MedicalAnalysis" in extarcted_info:
-                represent_info = ""
-                for index, item in enumerate(extarcted_info["MedicalAnalysis"]):
-                    represent_info += (
-                        f"{index + 1}."
-                        + "\n".join([f"{key} - {value}" for key, value in item.items()])
-                        + "\n\n"
-                    )
+            for section in ["MedicalResearch", "MedicalAnalysis"]:
+                if section in extarcted_info:
+                    represent_info = format_info(extarcted_info[section])
+                    break
 
             else:
                 update.message.reply_text(
@@ -153,13 +152,18 @@ async def handle_photo(update: Update, context: CallbackContext):
             await update.message.reply_text(
                 f"Информация извлечена из фотографии:\n{represent_info}"
             )
-            await save_data_to_db(extarcted_info)
-
+            
+            try:
+                await insert_data(extarcted_info)
+            except Exception as e:
+                await update.message.reply_text(
+                    "Не удалось сохранить информацию в базу данных. Возможно, она уже была сохранена. Пожалуйста, попробуйте еще раз"
+                )
+                
         except Exception as e:
             await update.message.reply_text(
-                f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
+                "К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
             )
-            print(f"Error: {str(e)}")
     else:
         await update.message.reply_text(
             "Пожалуйста, отправьте файл в формате PDF, PNG или JPEG."
