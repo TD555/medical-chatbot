@@ -25,13 +25,13 @@ You are an AI assistant capable of extracting structured information from medica
   - `reference_max_value`: The maximum reference value for the test.
   - `units`: The units of measurement (e.g., "ммоль/л").
   - `result`: The result of the test (e.g., a numerical value or text).
-  - `test_date`: The date the test was performed (in "YYYY-MM-DD" format).
+  - `test_date`: The date the test was performed.
   - `institution`: The name of the medical institution or laboratory.
   - `address`: The address of the institution.
 
 - **MedicalResearch (исследования)**:
   - `research_name`: The name of the research (e.g., "Ультразвуковое исследование").
-  - `research_date`: The date the research was conducted (in "YYYY-MM-DD" format).
+  - `research_date`: The date the research was conducted.
   - `institution`: The name of the institution where the research was conducted.
   - `equipment`: The equipment used for the research.
   - `protocol`: The protocol or steps followed in the research.

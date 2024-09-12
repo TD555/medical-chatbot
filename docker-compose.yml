@@ -1,5 +1,18 @@
 version: '3'
 services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    restart: always
+    shm_size: 128mb
+    environment:
+      - POSTGRES_PASSWORD=Tiko.777
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=medical_db
+      - PGDATA=/data/postgres
+    volumes:
+       - postgres:/data/postgres
   telbot:
     image: telegram_bot
     build: 
@@ -7,3 +20,13 @@ services:
 
     env_file: ".env"
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+    postgres:
