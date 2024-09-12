@@ -19,23 +19,23 @@ engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
 
-async def save_data_to_db(data):
+async def insert_data(data):
     session = Session()
     try:
-        if 'MedicalAnalysis' in data:
-            for item in data['MedicalAnalysis']:
-                analysis = MedicalAnalysis(**item)
-                session.add(analysis)
-                session.commit()
+        for section, model in [("MedicalAnalysis", MedicalAnalysis), ("MedicalResearch", MedicalResearch)]:
+            if section in data:
+                items = data[section]
                 
-        elif 'MedicalResearch' in data:
-            item = data['MedicalResearch']
-            analysis = MedicalResearch(**item)
-            session.add(analysis)
-            session.commit()
+                if not isinstance(items, list):
+                    items = [items]
+                    
+                for item in items:
+                    session.add(model(**item))
+        
+        session.commit()
             
     except SQLAlchemyError as e:
         raise Exception(f"Error saving data: {e}")
-        session.rollback()
+
     finally:
         session.close()
