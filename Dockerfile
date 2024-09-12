@@ -1,12 +1,12 @@
 FROM python:3.9-slim
 
-RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    pkg-config \
-    python3-dev \
-    build-essential
+# RUN apt-get update && apt-get install -y \
+#     tesseract-ocr \
+#     libtesseract-dev \
+#     libleptonica-dev \
+#     pkg-config \
+#     python3-dev \
+#     build-essential
 
 
 COPY requirements.txt .
