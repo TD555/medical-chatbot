@@ -5,7 +5,7 @@ import json
 import uuid
 from dateutil import parser
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
 GEMINI_MODEL = 'gemini-pro'
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
@@ -19,35 +19,43 @@ date_pattern = r"(?i)дата[\w\W]*?\b(?:исследования|анализ�
 
 # Define the prompt template for extracting structured data as JSON
 prompt_template = """
-You are an AI assistant capable of extracting structured information from medical documents. Given a passage, extract specific information and return it only as a JSON object. The JSON should include one of the following fields depending on the type of document:
+You are an advanced AI model designed to extract structured information from medical documents. Given a passage, your task is to extract relevant information based on the following two types of documents: MedicalAnalysis (анализы) and MedicalResearch (исследования). Your output should always be a valid JSON object with specific fields.
 
+Instructions for Extraction:
 MedicalAnalysis (анализы):
-test_name (e.g., Гемоглобин, Глюкоза)
-reference_min_value (e.g., min norm for the test, numeric value, for example: 30.8)
-reference_max_value (e.g., max norm for the test, numeric value, for example: 14.5)
-units (e.g., г/дл, %)
-result (e.g., numerical values or text, numeric value, for example: 28.5)
-test_date (e.g., 24/06/2020)
-institution (e.g., the name of the medical institution (ФГАУ Национальный медицинский иссле­довательский центр здоровья детей Минздрава России))
-address (e.g., Москва, Ломоносовский просп., 2, стр. 1)
 
+"test_name": The name of the medical test (e.g., "Гемоглобин", "Глюкоза").
+"reference_min_value": The minimum reference value for the test (numeric value, e.g., 30.8).
+"reference_max_value": The maximum reference value for the test (numeric value, e.g., 14.5).
+"units": Units of measurement for the test result (e.g., г/дл, %).
+"result": The outcome of the test (numeric or textual, e.g., 28.5).
+"test_date": The date when the test was conducted (e.g., "24/06/2020").
+"institution": The name of the medical institution (e.g., "ФГАУ Национальный медицинский исследовательский центр здоровья детей Минздрава России").
+"address": The address of the medical institution (e.g., "Москва, Ломоносовский просп., 2, стр. 1").
 MedicalResearch (исследования):
-research_name (e.g., "Ультразвуковое исследование")
-research_date (e.g., 24/06/2020)
-institution (e.g., the name of the medical institution (ФГАУ Национальный медицинский иссле­довательский центр здоровья детей Минздрава России))
-equipment (e.g., the equipment used for the study)
-protocol 
-conclusion (e.g., Достоверных МР-данных за наличие изменений очагового и диффузного характера в веществе мозга не
-получено.)
-recommendation
-address (e.g., Москва, Ломоносовский просп., 2, стр. 1)
 
-If certain information is not present in the text, return those fields only as None values. The extracted data should be structured and presented as a json file to the user. All properties names should be enclosed in double quotes.
+"research_name": The name of the medical research or study (e.g., "Ультразвуковое исследование").
+"research_date": The date the research was conducted (e.g., "24/06/2020").
+"institution": The name of the medical institution (e.g., "ФГАУ Национальный медицинский исследовательский центр здоровья детей Минздрава России").
+"equipment": The equipment used in the research (e.g., "MRI scanner").
+"protocol": The detailed protocol of the research (e.g., a description of the research procedure).
+"conclusion": The conclusion from the research (e.g., "Достоверных МР-данных за наличие изменений очагового и диффузного характера в веществе мозга не получено.").
+"recommendation": Any recommendations provided following the research.
+"address": The address of the medical institution (e.g., "Москва, Ломоносовский просп., 2, стр. 1").
+
+If any of these details are not present in the input text, return the respective fields with None values. The output should always include all relevant fields.
+All properties names should be enclosed in double quotes.
 
 Now, process the following text: {input_text}
 """
 
 async def change_date_format(data, date, text):
+
+    if date:
+        default_date = date.split(' ')[0]
+    else:
+        default_date=None
+
     def update_date(item, field_name):
         try:
             item[field_name] = parser.parse(item[field_name] if item[field_name] else default_date)
@@ -55,7 +63,6 @@ async def change_date_format(data, date, text):
             print(str(e))
             item[field_name] = None
 
-    default_date = date.split(' ')[0]
     
     def to_numeric(item, fields):
         for field in fields:
@@ -63,7 +70,6 @@ async def change_date_format(data, date, text):
                 item[field] = float(item[field].replace(',', '.'))
             except: item[field] = None
 
-    default_date = date.split(' ')[0]
 
     # Handle MedicalAnalysis
     if "MedicalAnalysis" in data:
@@ -101,11 +107,14 @@ async def extract_json_from_text(filename, text):
     response = model.generate_content(prompt)
     
     if response and response.candidates:
-        data = json.loads(rf'{re.search(r'\{[\w\W]*\}', response.text).group()}')
+        match = re.search(r'\{[\w\W]*\}', response.text)
+        if match:
+            data = json.loads(rf"{match.group()}")
+        else:
+            raise Exception("No valid response from the model")
+
         await change_date_format(data, date, text)
-        print(data)
         return data
-    
     else:
         raise Exception("No valid response from the model")
     

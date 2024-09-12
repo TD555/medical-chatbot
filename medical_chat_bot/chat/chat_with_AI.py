@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 # Database connection parameters
 dbname = os.environ.get('POSTGRES_DB')
 user = os.environ.get('POSTGRES_USER')
@@ -26,6 +25,21 @@ model = os.environ.get("AZURE_OPENAI_MODEL")
 
 llm = AzureChatOpenAI(
     deployment_name=model, api_version="2023-03-15-preview", model=model, temperature=0
+)
+
+no_data_prompt = PromptTemplate.from_template(
+    """
+    You are an assistant who provides human-like responses to the user's questions.
+    
+    If `found=True`: No data found based on the user's question, generate a concise and polite message in Russian. 
+    If `found=False`: The query could not be understood, or there might be insufficient information to find the answer. Ask the user to clarify or provide more specific details.
+
+    Make sure not to mention technical details like databases or tables, and avoid repeating the same response.
+
+    User Question: {question}
+    Found: {found}
+
+    Answer:"""
 )
 
 sql_query_prompt = PromptTemplate.from_template(
@@ -68,19 +82,23 @@ answer_prompt = PromptTemplate.from_template(
 
 def answer_question(question="Напиши сколько анализов я давал?"):
 
-    
-    execute_query = QuerySQLDataBaseTool(db=db)
-    write_query = create_sql_query_chain(llm, db, prompt=sql_query_prompt)
-    
-    generated_sql = write_query.invoke({"question": question})
-    sql_result = execute_query.invoke({"query": generated_sql})
-    
-    print(generated_sql)
-    
-    if not sql_result or len(sql_result) == 0:
-        # If the result is empty, return a "no data" message
-        no_data_answer = "К сожалению, данные не найдены, пожалуйста, попробуйте еще раз."
-        return no_data_answer
+    try:
+        execute_query = QuerySQLDataBaseTool(db=db)
+        write_query = create_sql_query_chain(llm, db, prompt=sql_query_prompt)
+        
+        generated_sql = write_query.invoke({"question": question})
+        sql_result = execute_query.invoke({"query": generated_sql})
+        
+        print(generated_sql)
+        
+        if not sql_result or len(sql_result) == 0:
+            # Generate a custom response when no data is found
+                no_data_response = no_data_prompt.format(question=question, found=True if not len(sql_result) else False)
+                custom_no_data_answer = llm.predict(no_data_response)
+                return custom_no_data_answer.strip()
+    except Exception as e:
+        print(str(e)) 
+        return "К сожалению, данные не найдены, пожалуйста, попробуйте еще раз."
     
     sql_chain = (
         RunnablePassthrough.assign(query=write_query).assign(

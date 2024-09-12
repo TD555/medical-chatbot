@@ -51,12 +51,9 @@ def create_database_if_not_exists():
         if not cursor.fetchone():
             cursor.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname)))
             print(f"Database '{dbname}' created.")
-            already_exists = False
         else:
             print(f"Database '{dbname}' already exists.")
-            already_exists = True
     connection.close()
-    return already_exists
 
 # Create tables in the database
 def create_tables():
@@ -65,6 +62,6 @@ def create_tables():
     Base.metadata.create_all(engine)
     print("Tables created.")
 
-# Run database creation functions
-if not create_database_if_not_exists():
-    create_tables()
+# Run database and tables creation functions
+create_database_if_not_exists()
+create_tables()
