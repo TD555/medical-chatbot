@@ -44,7 +44,6 @@ async def extract_text_from_pdf_images(page, pdf_document) -> str:
             text += pytesseract.image_to_string(pil_image) + " "
 
         except Exception as e:
-            # raise Exception(f"Error processing image {img_index}: {e}")
-            pass
+            raise Exception(f"Error processing image {img_index}: {e}")
 
     return text

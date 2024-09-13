@@ -106,7 +106,7 @@ async def handle_document(update: Update, context: CallbackContext):
                     represent_info = format_info(extarcted_info[section])
 
             else:
-                update.message.reply_text(
+                await update.message.reply_text(
                     f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
                 )
 
@@ -161,7 +161,7 @@ async def handle_photo(update: Update, context: CallbackContext):
                     represent_info = format_info(extarcted_info[section])
 
             else:
-                update.message.reply_text(
+                await update.message.reply_text(
                     "К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
                 )
 

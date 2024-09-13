@@ -1,2 +1,6 @@
 project_venv/
 testing/
+medical_chat_bot/telegram-bot/__pycache__/
+medical_chat_bot/extraction/__pycache__/
+medical_chat_bot/db/__pycache__/
+medical_chat_bot/chat/__pycache__/
