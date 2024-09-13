@@ -9,7 +9,12 @@ from telegram.ext import (
     CallbackContext,
 )
 from telegram import Update
-from version import *
+from version import (__title__,
+                    __description__,
+                    __url__ ,
+                    __version__,
+                    __author__,
+                    __author_email__)
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
