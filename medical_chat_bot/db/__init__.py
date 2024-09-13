@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, Column, Uuid, String, DateTime, Text, Floa
 from sqlalchemy.ext.declarative import declarative_base
 import os
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
 # Define the SQLAlchemy base class
 Base = declarative_base()

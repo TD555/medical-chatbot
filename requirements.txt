@@ -3,7 +3,6 @@ python-telegram-bot==21.5
 PyMuPDF==1.23.6
 pillow==10.4.0
 pytesseract==0.3.13
-# psycopg2-binary
 python-dateutil==2.9.0.post0
 google-generativeai==0.7.2
 SQLAlchemy==2.0.34
