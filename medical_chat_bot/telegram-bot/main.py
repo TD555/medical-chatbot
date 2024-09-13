@@ -110,7 +110,7 @@ async def handle_document(update: Update, context: CallbackContext):
             for section in ["MedicalResearch", "MedicalAnalysis"]:
                 if section in extarcted_info:
                     represent_info = format_info(extarcted_info[section])
-
+                    break
             else:
                 await update.message.reply_text(
                     f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
