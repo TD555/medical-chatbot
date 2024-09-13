@@ -62,5 +62,5 @@ The bot uses a PostgreSQL database (`medical_db`) with two main tables:
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/medical-chatbot.git
+   git clone https://github.com/TD555/medical-chatbot.git
    cd medical-chatbot
