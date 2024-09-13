@@ -165,6 +165,7 @@ async def handle_photo(update: Update, context: CallbackContext):
             for section in ["MedicalResearch", "MedicalAnalysis"]:
                 if section in extarcted_info:
                     represent_info = format_info(extarcted_info[section])
+                    break
 
             else:
                 await update.message.reply_text(
