@@ -5,6 +5,7 @@ import json
 import uuid
 from dateutil import parser
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
 GEMINI_MODEL = 'gemini-pro'
@@ -43,78 +44,132 @@ recommendation (any recommendations provided following the research, e.g., Дл�
 рассмотрены лечащим врачом в совокупности с клиническими данными)
 address (the address of the medical institution, e.g., Москва, Ломоносовский просп., 2, стр. 1)
 
-If certain information is not present in the text, return those fields only as None values. The extracted data should be structured and presented as a json file to the user. All properties names should be enclosed in double quotes.
+If certain information is not present in the text, return those fields only as null values. The extracted data should be structured and presented as a json file to the user. All properties names should be enclosed in double quotes.
 All properties names should be enclosed in double quotes.
 
 Now, process the following text: {input_text}
 """
 
+
+def check_and_complete_json(json_string):
+    try:
+        # Try to load the JSON as is
+        data = json.loads(json_string)
+        return data
+    except json.JSONDecodeError as e:
+        print(f"Error : {str(e)}")
+
+        # Stack to keep track of opening braces/brackets
+        stack = []
+        fixed_json = []
+
+        for char in json_string:
+            fixed_json.append(char)
+
+            if char == "{" or char == "[":
+                stack.append(char)
+            elif char == "}" or char == "]":
+                if not stack:
+                    continue
+                open_brace = stack.pop()
+                if (open_brace == "{" and char != "}") or (
+                    open_brace == "[" and char != "]"
+                ):
+                    return {}  # Structure is corrupted, cannot be fixed
+
+        # Complete any unclosed braces/brackets
+        while stack:
+            open_brace = stack.pop()
+            if open_brace == "{":
+                fixed_json.append("}")
+            elif open_brace == "[":
+                fixed_json.append("]")
+
+        completed_json_string = "".join(fixed_json)
+
+        # Try parsing the corrected JSON
+        try:
+            data = json.loads(completed_json_string)
+            return data
+        except json.JSONDecodeError as e:
+            print(f"Error after completion attempt: {str(e)}")
+            return {}
+
+
 async def change_date_format(data, date, text):
 
     if date:
-        default_date = date.split(' ')[0]
+        default_date = date.split(" ")[0]
     else:
-        default_date=None
+        default_date = None
 
     def update_date(item, field_name):
         try:
-            item[field_name] = parser.parse(item[field_name] if item[field_name] else default_date)
-        except ValueError as e:
+            item[field_name] = parser.parse(
+                item[field_name] if item[field_name] else default_date
+            )
+        except Exception as e:
             print(str(e))
             item[field_name] = None
 
-    
     def to_numeric(item, fields):
         for field in fields:
             try:
-                item[field] = float(item[field].replace(',', '.'))
-            except: item[field] = None
-
+                item[field] = float(str(item[field]).replace(",", "."))
+            except:
+                item[field] = None
 
     # Handle MedicalAnalysis
     if "MedicalAnalysis" in data:
         if isinstance(data["MedicalAnalysis"], list):
             for index, item in enumerate(data["MedicalAnalysis"]):
-                update_date(item, 'test_date')
-                to_numeric(item=item, fields=['reference_min_value', 'reference_max_value', 'result'])
+                update_date(item, "test_date")
+                to_numeric(
+                    item=item,
+                    fields=["reference_min_value", "reference_max_value", "result"],
+                )
                 item.update({"id": uuid.uuid5(namespace, text + str(index))})
         elif isinstance(data["MedicalAnalysis"], dict):
-            update_date(data["MedicalAnalysis"], 'test_date')
-            to_numeric(item=item, fields=['reference_min_value', 'reference_max_value', 'result'])
+            update_date(data["MedicalAnalysis"], "test_date")
+            to_numeric(
+                item=item,
+                fields=["reference_min_value", "reference_max_value", "result"],
+            )
             data["MedicalAnalysis"].update({"id": uuid.uuid5(namespace, text)})
 
     # Handle MedicalResearch
     if "MedicalResearch" in data:
         if isinstance(data["MedicalResearch"], list):
             for index, item in enumerate(data["MedicalResearch"]):
-                update_date(item, 'research_date')
+                update_date(item, "research_date")
                 item.update({"id": uuid.uuid5(namespace, text + str(index))})
         elif isinstance(data["MedicalResearch"], dict):
-            update_date(data["MedicalResearch"], 'research_date') 
+            update_date(data["MedicalResearch"], "research_date")
             data["MedicalResearch"].update({"id": uuid.uuid5(namespace, text)})
-                
-                
+
+
 async def extract_json_from_text(filename, text):
-    
-    input_text = filename + '\n' + text
-    
+
+    input_text = filename + "\n" + text
+
     date = re.search(date_pattern, input_text)
     if date:
         date = date.group(1)
-        
+
     prompt = prompt_template.format(input_text=input_text)
-    
+
     response = model.generate_content(prompt)
-    
+
     if response and response.candidates:
-        match = re.search(r'\{[\w\W]*\}', response.text)
+        match = re.search(r"\{[\w\W]*\}", response.text)
         if match:
-            data = json.loads(rf"{match.group()}")
+            data = check_and_complete_json(match.group())
+            if data:
+                await change_date_format(data, date, text)
+                return data
+            else:
+                raise Exception("No valid response from the model")
         else:
             raise Exception("No valid response from the model")
-
-        await change_date_format(data, date, text)
-        return data
     else:
         raise Exception("No valid response from the model")
-    
