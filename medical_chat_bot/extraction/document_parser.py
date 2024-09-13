@@ -3,6 +3,7 @@ from typing import Union
 from io import BytesIO
 from PIL import Image
 import pytesseract
+import re
 
 
 async def extract_text_from_pdf(pdf_file: Union[BytesIO, bytes]) -> str:
@@ -15,9 +16,9 @@ async def extract_text_from_pdf(pdf_file: Union[BytesIO, bytes]) -> str:
         page = pdf_document.load_page(page_num)
 
         text = page.get_text("text", sort=True)
-        # clean_text = text.replace("\n", " ")
-        # clean_text = re.sub(r'\s+', ' ', clean_text)
-        all_texts += text + " "
+        clean_text = text.replace("\n", " ")
+        clean_text = re.sub(r"\s+", " ", clean_text)
+        all_texts += clean_text + " "
 
         images_text = await extract_text_from_pdf_images(page, pdf_document)
         all_texts += images_text + " "

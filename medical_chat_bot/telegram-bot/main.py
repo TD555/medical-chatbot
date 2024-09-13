@@ -9,7 +9,12 @@ from telegram.ext import (
     CallbackContext,
 )
 from telegram import Update
-from version import *
+from version import (__title__,
+                    __description__,
+                    __url__ ,
+                    __version__,
+                    __author__,
+                    __author_email__)
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -53,6 +58,7 @@ KEY_MAPPING = {
             'recommendation': 'Рекомендация исследования'
 }
 
+        
 def format_info(data):
     if isinstance(data, dict):
         return "\n".join([f"{KEY_MAPPING.get(key, key)} - {value if value else 'Нет данных'}" for key, value in data.items()])
@@ -109,11 +115,11 @@ async def handle_document(update: Update, context: CallbackContext):
                 await update.message.reply_text(
                     f"К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
                 )
-
-            await update.message.reply_text(
-                f"Информация извлечена из документа:\n{represent_info}"
-            )
-
+            await update.message.reply_text("Информация извлечена из документа:\n")
+            msgs = [represent_info[i:i + 4096] for i in range(0, len(represent_info), 4096)]
+            for text in msgs:
+                await update.message.reply_text(text=text)
+                
             try:
                 await insert_data(extarcted_info)
                 await update.message.reply_text(
@@ -164,10 +170,11 @@ async def handle_photo(update: Update, context: CallbackContext):
                 await update.message.reply_text(
                     "К настоящему моменту не удалось получить информацию из документа. Пожалуйста, попробуйте еще раз."
                 )
-
-            await update.message.reply_text(
-                f"Информация извлечена из фотографии:\n{represent_info}"
-            )
+                
+            await update.message.reply_text("Информация извлечена из фотографии:\n")
+            msgs = [represent_info[i:i + 4096] for i in range(0, len(represent_info), 4096)]
+            for text in msgs:
+                await update.message.reply_text(text=text)
 
             try:
                 await insert_data(extarcted_info)
