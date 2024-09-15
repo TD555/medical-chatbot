@@ -123,7 +123,7 @@ async def change_date_format(data, date, text):
     def update_date(item, field_name):
         try:
             date_Str = str(item[field_name])
-            for month in months:
+            for month in months and date_Str:
                 if month in date_Str:
                     parts = date_Str.split()
                     day = parts[0]
@@ -132,7 +132,6 @@ async def change_date_format(data, date, text):
                     date_Str = f"{day}/{month}/{year}"
                     break
 
-            print(date_Str)
             item[field_name] = parser.parse(
                 date_Str if date_Str else default_date
             )
