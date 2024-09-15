@@ -18,6 +18,23 @@ namespace = uuid.NAMESPACE_DNS
 
 date_pattern = r"(?i)дата[\w\W]*?\b(?:исследования|анализа|дата)\b:\s*(.*)"
 
+# Dictionary to map Russian month names to month numbers
+months = {
+    "января": "01",
+    "февраля": "02",
+    "марта": "03",
+    "апреля": "04",
+    "мая": "05",
+    "июня": "06",
+    "июля": "07",
+    "августа": "08",
+    "сентября": "09",
+    "октября": "10",
+    "ноября": "11",
+    "декабря": "12"
+}
+
+
 # Define the prompt template for extracting structured data as JSON
 prompt_template = """
 You are an AI assistant capable of extracting structured information from medical documents. Given a passage, extract specific information and return it only as a JSON object. The JSON should include one of the following fields depending on the type of document:
@@ -105,8 +122,19 @@ async def change_date_format(data, date, text):
 
     def update_date(item, field_name):
         try:
+            date_Str = str(item[field_name])
+            for month in months:
+                if month in date_Str:
+                    parts = date_Str.split()
+                    day = parts[0]
+                    month = months[parts[1]]
+                    year = parts[2]
+                    date_Str = f"{day}/{month}/{year}"
+                    break
+
+            print(date_Str)
             item[field_name] = parser.parse(
-                item[field_name] if item[field_name] else default_date
+                date_Str if date_Str else default_date
             )
         except Exception as e:
             print(str(e))
@@ -126,14 +154,16 @@ async def change_date_format(data, date, text):
                 update_date(item, "test_date")
                 to_numeric(
                     item=item,
-                    fields=["reference_min_value", "reference_max_value", "result"],
+                    fields=["reference_min_value",
+                            "reference_max_value", "result"],
                 )
                 item.update({"id": uuid.uuid5(namespace, text + str(index))})
         elif isinstance(data["MedicalAnalysis"], dict):
             update_date(data["MedicalAnalysis"], "test_date")
             to_numeric(
                 item=item,
-                fields=["reference_min_value", "reference_max_value", "result"],
+                fields=["reference_min_value",
+                        "reference_max_value", "result"],
             )
             data["MedicalAnalysis"].update({"id": uuid.uuid5(namespace, text)})
 

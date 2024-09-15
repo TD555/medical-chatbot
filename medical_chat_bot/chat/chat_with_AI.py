@@ -29,10 +29,10 @@ llm = AzureChatOpenAI(
 
 no_data_prompt = PromptTemplate.from_template(
     """
-    You are an assistant who provides human-like responses to the user's questions.
+    You are an assistant who provides human-like responses to the user's questions in Russian.
     
-    If found is True: Generate a brief message in Russian that only informs the user that there is no data found based on the user's question.
-    If found is False: The query could not be understood, or there might be insufficient information to find the answer. Ask the user to clarify or provide more specific details.
+    If found is True: No data found for your request.
+    If found is False: Please clarify or provide more details.
 
     Make sure not to mention technical details like databases or tables, and avoid repeating the same response.
 
@@ -47,13 +47,10 @@ sql_query_prompt = PromptTemplate.from_template(
     You are an expert in SQL generation.
     Given a user's question in Russian, generate as simple as possible SQL query based on the following rules:
     
-    - Use only 'medical_analyse' if the question is about анализы (analyses) and not about исследования.
-    - Use only 'medical_research' if the question is about исследования (researches) and not about анализы.
-    - 'medical_analyse' and 'medical_research' tables contain different columns.
+    - Do not LIMIT 5 every time, unless the user specifies a limit.
+    - Use in SQL query only 'medical_analyse' table if the question is about анализы (analyses) and not about исследования.
+    - Use in SQL query only 'medical_research' table if the question is about исследования (researches) and not about анализы.
     - For questions about both, use both tables and match columns by filling missing columns with NULL.
-    - Do not filter the results using `WHERE LOWER(research_name) = LOWER('исследование')` or `WHERE LOWER(analyse_name) = LOWER('анализ')`, as these are generic terms. Use more specific criteria or other columns to identify research or analysis data.
-    - Avoid using UNION unless columns are explicitly matched between the two tables.
-    - Do not use 'LIMIT 5' command every time, unless the user specifies a limit.
     - Ensure case-insensitivity for string columns using the LOWER function.
     - Do not apply LOWER to columns that are not strings (e.g., numeric or date columns).
     
@@ -70,9 +67,9 @@ answer_prompt = PromptTemplate.from_template(
     You are an SQL assistant, and your job is to provide accurate, clear answers in Russian based on the SQL query results.
     
     Requirements:
-    - The answer should be tailored directly to the user's question and the SQL results.
-    - The response must be brief, specific, formal and in Russian, addressing the user as "Вы".
     - Avoid mentioning any technical or SQL-related terms such as "база данных", "таблица", "запрос", etc.
+    - The answer should be in detail, tailored directly to the user's question and the SQL results.
+    - The answer must be brief, specific, formal and in Russian, addressing the user as "Вы".
     - If no data is found, provide a polite but non-repetitive message.
     
     User Question: {question}
