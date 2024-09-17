@@ -16,7 +16,7 @@ model = genai.GenerativeModel(GEMINI_MODEL)
 
 namespace = uuid.NAMESPACE_DNS
 
-date_pattern = r"(?i)дата[\w\W]*?\b(?:исследования|анализа|дата)\b:\s*(.*)"
+date_pattern = r"(?i)дата[\w\W]*?\b(?:исследования|анализа|дата|результата)\b:\s*(.*)"
 
 # Dictionary to map Russian month names to month numbers
 months = {

@@ -4,7 +4,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from operator import itemgetter
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import create_sql_query_chain
 import os
 from dotenv import load_dotenv
@@ -21,10 +21,10 @@ port = os.environ.get("POSTGRES_PORT")
 connection_string = f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
 db = SQLDatabase.from_uri(connection_string)
 
-model = os.environ.get("AZURE_OPENAI_MODEL")
+model = os.environ.get("OPENAI_MODEL")
 
-llm = AzureChatOpenAI(
-    deployment_name=model, api_version="2023-03-15-preview", model=model, temperature=0
+llm = ChatOpenAI(
+    model=model, temperature=0
 )
 
 no_data_prompt = PromptTemplate.from_template(
@@ -47,11 +47,11 @@ sql_query_prompt = PromptTemplate.from_template(
     You are an expert in SQL generation.
     Given a user's question in Russian, generate as simple as possible SQL query based on the following rules:
     
-    - Do not LIMIT 5 every time, unless the user specifies a limit.
+    - Do not use 'LIMIT 5'.
     - Use in SQL query only 'medical_analyse' table if the question is about анализы (analyses) and not about исследования.
     - Use in SQL query only 'medical_research' table if the question is about исследования (researches) and not about анализы.
     - For questions about both, use both tables and match columns by filling missing columns with NULL.
-    - Ensure case-insensitivity for string columns using the LOWER function.
+    - Ensure case-insensitivity for string columns using the LOWER function and try to search with wildcards.
     - Do not apply LOWER to columns that are not strings (e.g., numeric or date columns).
     
     Input Question: {input}
@@ -107,10 +107,12 @@ def answer_question(question="Напиши сколько анализов я д
             result=itemgetter("query") | execute_query
         )
         | answer_prompt
-        | llm.bind(stop=["\n\n"])
+        | llm
         | StrOutputParser()
     )
 
     result = sql_chain.invoke({"question": question})
 
+    print(result.strip())
+    
     return result.strip()

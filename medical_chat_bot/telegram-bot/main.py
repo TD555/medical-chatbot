@@ -30,7 +30,7 @@ load_dotenv()
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.ERROR,
     # Logs will be sent to STDOUT
     handlers=[logging.StreamHandler(sys.stdout)],
 )
@@ -201,7 +201,7 @@ async def handle_photo(update: Update, context: CallbackContext):
 
 async def handle_message(update: Update, context: CallbackContext):
     user_question = update.message.text
-
+    print(user_question)
     try:
         answer = answer_question(question=user_question)
         await update.message.reply_text(answer)
