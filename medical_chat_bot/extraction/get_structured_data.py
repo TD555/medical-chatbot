@@ -45,13 +45,13 @@ reference_min_value (e.g., min norm for the test, numeric value, for example: 30
 reference_max_value (e.g., max norm for the test, numeric value, for example: 14.5)
 units (e.g., г/дл, %)
 result (e.g., numerical values or text, numeric value, for example: 28.5)
-test_date (e.g., 24/06/2020)
+test_date (e.g., 24.06.2020, 24/06/2020)
 institution (e.g., the name of the medical institution e.g., ФГАУ Национальный медицинский иссле­довательский центр здоровья детей Минздрава России)
 address (the address of the medical institution, e.g., "Москва, Ломоносовский просп., 2, стр. 1")
 
 MedicalResearch (исследования):
 research_name (e.g., "Ультразвуковое исследование")
-research_date (e.g., 24/06/2020)
+research_date (e.g., 24.06.2020, 24/06/2020)
 institution (the name of the medical institution ,e.g., ФГАУ Национальный медицинский иссле­довательский центр здоровья детей Минздрава России)
 equipment (e.g., the equipment used for the study)
 protocol (the detailed protocol of the research, a description of the research procedure, e.g., На серии МР-томограмм взвешенных по Т1 и Т2 в аксиальной, сагиттальной и фронтальной проекциях
@@ -79,7 +79,7 @@ def check_and_complete_json(json_string):
         # Stack to keep track of opening braces/brackets
         stack = []
         fixed_json = []
-
+        
         for char in json_string:
             fixed_json.append(char)
 
@@ -123,14 +123,15 @@ async def change_date_format(data, date, text):
     def update_date(item, field_name):
         try:
             date_Str = str(item[field_name])
-            for month in months and date_Str:
-                if month in date_Str:
-                    parts = date_Str.split()
-                    day = parts[0]
-                    month = months[parts[1]]
-                    year = parts[2]
-                    date_Str = f"{day}/{month}/{year}"
-                    break
+            if date_Str:
+                for month in months and date_Str:
+                    if month in date_Str:
+                        parts = date_Str.split()
+                        day = parts[0]
+                        month = months[parts[1]]
+                        year = parts[2]
+                        date_Str = f"{day}/{month}/{year}"
+                        break
 
             item[field_name] = parser.parse(
                 date_Str if date_Str else default_date
