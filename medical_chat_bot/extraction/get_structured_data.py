@@ -124,7 +124,7 @@ async def change_date_format(data, date, text):
         try:
             date_Str = str(item[field_name])
             if date_Str:
-                for month in months and date_Str:
+                for month in months:
                     if month in date_Str:
                         parts = date_Str.split()
                         day = parts[0]
