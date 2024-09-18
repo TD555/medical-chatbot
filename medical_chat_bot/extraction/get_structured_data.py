@@ -144,7 +144,7 @@ async def change_date_format(data, date, text):
     def to_numeric(item, fields):
         for field in fields:
             try:
-                item[field] = float(str(item[field]).replace(",", "."))
+                item[field] = float(re.sub(r'[^0-9.]', '', str(item[field]).replace(",", ".")))
             except:
                 item[field] = None
 
@@ -192,6 +192,7 @@ async def extract_json_from_text(filename, text):
     response = model.generate_content(prompt)
 
     if response and response.candidates:
+        print(response.text)
         match = re.search(r"\{[\w\W]*\}", response.text)
         if match:
             data = check_and_complete_json(match.group())

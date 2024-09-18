@@ -123,11 +123,11 @@ async def handle_document(update: Update, context: CallbackContext):
             try:
                 await insert_data(extarcted_info)
                 await update.message.reply_text(
-                    f"Информация извлечена из документа {document.file_name} успешно сохранен в базу данных!"
+                    f"Информация извлечена из документа {document.file_name} успешно сохранена в базу данных!"
                 )
             except Exception as e:
                 await update.message.reply_text(
-                    f"Не удалось сохранить информацию в базу данных. Возможно, она уже была сохранена. Пожалуйста проверьте и попробуйте еще раз."
+                    "Не удалось сохранить информацию в базу данных. Возможно, она уже была сохранена. Пожалуйста проверьте и попробуйте еще раз."
                 )
                 logger.error(f"Error: {str(e)}")
 
@@ -180,7 +180,7 @@ async def handle_photo(update: Update, context: CallbackContext):
             try:
                 await insert_data(extarcted_info)
                 await update.message.reply_text(
-                    f"Информация извлечена из фотографии успешно сохранен в базу данных!"
+                    f"Информация извлечена из фотографии успешно сохранена в базу данных!"
                 )
             except Exception as e:
                 await update.message.reply_text(
