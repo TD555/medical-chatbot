@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
-GEMINI_MODEL = 'gemini-pro'
+GEMINI_MODEL = os.environ.get('GOOGLE_MODEL')
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -61,7 +61,7 @@ recommendation (any recommendations provided following the research, e.g., Дл�
 рассмотрены лечащим врачом в совокупности с клиническими данными)
 address (the address of the medical institution, e.g., Москва, Ломоносовский просп., 2, стр. 1)
 
-If certain information is not present in the text, return those fields only as null values. The extracted data should be structured and presented as a json file to the user. All properties names should be enclosed in double quotes.
+If, however, certain information is not found in the text, return those fields only as null values. The extracted data should be structured and presented as a json file to the user. All properties names should be enclosed in double quotes.
 All properties names should be enclosed in double quotes.
 
 Now, process the following text: {input_text}
@@ -122,7 +122,8 @@ async def change_date_format(data, date, text):
 
     def update_date(item, field_name):
         try:
-            date_Str = str(item[field_name])
+            date_Str = str(item[field_name]) if item[field_name] else None
+            print(date_Str, default_date)
             if date_Str:
                 for month in months:
                     if month in date_Str:
